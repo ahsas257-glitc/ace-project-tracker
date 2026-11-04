@@ -24,8 +24,6 @@ Without secrets the app opens with no password and stores data in `data/*.csv`, 
 7. Copy the sheet ID from its link: `docs.google.com/spreadsheets/d/<SHEET ID>/edit`.
 
 The app creates the tabs it needs (`projects, actions, tasks, indicators, log, snaps`) on first run.
-Alternatively, upload `ACE_Tracker_starter_sheet.xlsx` to Google Drive and open it as a Google Sheet.
-
 ## 3. Publish on Streamlit Community Cloud
 
 1. Put this folder in a GitHub repository (private is fine). Do **not** upload a real `secrets.toml`.
