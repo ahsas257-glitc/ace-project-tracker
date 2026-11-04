@@ -11,7 +11,10 @@ Views: Overview · Implementation plan (Gantt + Excel download) · Update progre
 pip install -r requirements.txt
 streamlit run app.py
 ```
-Without secrets the app opens with no password and stores data in `data/*.csv`, loaded from `seed_data/` (UNDP A2F, DIP 7 Oct 2026).
+The app requires Google Sheets credentials by default. For an offline PowerShell test,
+set `$env:ACE_TRACKER_LOCAL = "1"` before starting Streamlit with no Google Sheets
+credentials configured. This mode stores data in `data/*.csv`, initialized from
+`seed_data/` (UNDP A2F, DIP 7 Oct 2026). Leave this variable unset on Community Cloud.
 
 ## 2. Create the Google Sheet and a service account (once, ~10 minutes)
 
@@ -30,7 +33,7 @@ Alternatively, upload `ACE_Tracker_starter_sheet.xlsx` to Google Drive and open 
 
 1. Put this folder in a GitHub repository (private is fine). Do **not** upload a real `secrets.toml`.
 2. Go to <https://share.streamlit.io> → **Create app** → choose the repo, branch, and `app.py`.
-3. **Advanced settings → Secrets**: paste the contents of `.streamlit/secrets.toml.example` with your real values
+3. **Advanced settings → Secrets**: paste the contents of `.streamlit/secrets.toml` with your real values
    (two passwords, the sheet ID, and every field from the service-account JSON).
 4. Deploy. Open the app, sign in with the **editor** password, and click
    **Load the UNDP A2F plan** (only shown while the sheet is empty).

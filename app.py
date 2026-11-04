@@ -73,7 +73,7 @@ def truthy(x) -> bool:
 
 
 def fmt(x: date | None) -> str:
-    return x.strftime("%-d %b %Y") if x else "—"
+    return f"{x.day} {x:%b %Y}" if x else "—"
 
 
 def now_iso() -> str:
@@ -319,7 +319,7 @@ def page_overview():
         st.caption("No updates yet. Changes saved under Update progress appear here.")
     else:
         show = L.head(10)[["at", "by", "label", "change"]].copy()
-        show["at"] = pd.to_datetime(show["at"], errors="coerce", utc=True).dt.strftime("%-d %b %H:%M")
+        show["at"] = pd.to_datetime(show["at"], errors="coerce", utc=True).dt.strftime("%d %b %H:%M").str.lstrip("0")
         st.dataframe(show.rename(columns={"at": "When (UTC)", "by": "Who", "label": "Item", "change": "Change"}),
                      hide_index=True, width="stretch")
 
@@ -413,7 +413,7 @@ def page_plan():
     ticks = [w_start + timedelta(days=7 * k) for k in range(0, (weeks or 20) + 1, step)]
     fig.update_layout(barmode="overlay", height=max(380, 26 * len(df) + 80), margin=dict(l=10, r=10, t=30, b=10),
                       yaxis=dict(autorange="reversed", tickfont=dict(size=11), categoryorder="array", categoryarray=df.label.tolist()),
-                      xaxis=dict(type="date", tickvals=ticks, ticktext=[f"W{k * step + 1}<br>{t:%-d %b}" for k, t in enumerate(ticks)], tickangle=0, side="top"),
+                      xaxis=dict(type="date", tickvals=ticks, ticktext=[f"W{k * step + 1}<br>{t.day} {t:%b}" for k, t in enumerate(ticks)], tickangle=0, side="top"),
                       legend=dict(orientation="h", y=-0.02))
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
     out = T[["ref", "sub", "owner", "start_d", "end_d", "due", "status", "progress", "flag", "actual_d", "note"]].copy()
@@ -673,7 +673,7 @@ def page_log():
         st.caption("No updates yet.")
         return
     show = L[["at", "by", "ref", "label", "change"]].copy()
-    show["at"] = pd.to_datetime(show["at"], errors="coerce", utc=True).dt.strftime("%-d %b %Y %H:%M")
+    show["at"] = pd.to_datetime(show["at"], errors="coerce", utc=True).dt.strftime("%d %b %Y %H:%M").str.lstrip("0")
     st.dataframe(show.rename(columns={"at": "When (UTC)", "by": "Who", "ref": "Ref", "label": "Item", "change": "Change"}),
                  hide_index=True, width="stretch", height=600)
 
