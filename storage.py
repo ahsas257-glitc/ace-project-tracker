@@ -1,8 +1,7 @@
 """Storage for the ACE Project Tracker.
 
 Live deployments keep everything in one Google Sheet (one tab per table).
-When no Google credentials are configured, the app falls back to CSV files in
-./data so you can try it on your own computer.
+Set ACE_TRACKER_LOCAL=1 to explicitly use CSV files for local testing.
 """
 from __future__ import annotations
 
@@ -165,24 +164,24 @@ class SheetStore:
     def load_seed(self):
         for tab, cols in SCHEMA.items():
             df = pd.read_csv(SEED / f"{tab}.csv", dtype=str, keep_default_na=False)
-            ws = self.ws[tab]
-            ws.clear()
-            ws.update([cols] + df.reindex(columns=cols).fillna("").values.tolist(), "A1",
-                      value_input_option="RAW")
+            self.upsert(tab, df.reindex(columns=cols).fillna("").to_dict("records"))
 
 
 @st.cache_resource(show_spinner=False)
 def get_store():
     try:
         sec = st.secrets
-        if "gcp_service_account" in sec and "sheet_key" in sec:
+        if sec.get("gcp_service_account") and sec.get("sheet_key"):
             return SheetStore(dict(sec["gcp_service_account"]), sec["sheet_key"])
     except FileNotFoundError:
         pass
-    except Exception as e:  # surface misconfiguration instead of silently using local files
-        st.error(f"Could not open the Google Sheet: {e}")
+    except Exception as exc:
+        st.error(f"Could not open the Google Sheet ({type(exc).__name__}). Check the service account and sheet access.")
         st.stop()
-    return LocalStore()
+    if os.environ.get("ACE_TRACKER_LOCAL") == "1":
+        return LocalStore()
+    st.error("Google Sheets storage requires sheet_key and gcp_service_account in Streamlit Secrets.")
+    st.stop()
 
 
 @st.cache_data(ttl=45, show_spinner=False)

@@ -2,6 +2,9 @@
 data/
 __pycache__/
 
+.venv/
+.idea/
+
 *.[xX][lL][sS]
 *.[xX][lL][sS][xXmMbB]
 *.[xX][lL][tT]
