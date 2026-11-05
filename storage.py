@@ -167,6 +167,25 @@ class SheetStore:
             self.upsert(tab, df.reindex(columns=cols).fillna("").to_dict("records"))
 
 
+def seed_projects() -> pd.DataFrame:
+    """Starter projects shipped in seed_data/ (each with its plan, indicators and baseline)."""
+    return pd.read_csv(SEED / "projects.csv", dtype=str, keep_default_na=False)
+
+
+def add_seed_project(pid: str):
+    """Copy one starter project from seed_data/ into the live store, preserving existing rows so a partial import can be retried."""
+    store = get_store()
+    for tab in [name for name in SCHEMA if name != "projects"] + ["projects"]:
+        df = pd.read_csv(SEED / f"{tab}.csv", dtype=str, keep_default_na=False)
+        key = "id" if tab == "projects" else "project"
+        rows = df[df[key] == pid].to_dict("records")
+        existing = set(store.read(tab)["id"])
+        rows = [row for row in rows if row["id"] not in existing]
+        if rows:
+            store.upsert(tab, rows)
+    read_tab.clear()
+
+
 @st.cache_resource(show_spinner=False)
 def get_store():
     try:

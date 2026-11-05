@@ -15,7 +15,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from storage import get_store, read_tab, remove, write
+from storage import add_seed_project, get_store, read_tab, remove, seed_projects, write
 
 st.set_page_config(page_title="ACE Project Tracker", page_icon="📊", layout="wide")
 
@@ -184,10 +184,10 @@ EDITOR = st.session_state.get("role") == "editor"
 store = get_store()
 
 # ---------------------------------------------------------------- empty sheet
-if store.is_empty():
+if read_tab("projects").empty:
     st.title("ACE Project Tracker")
     st.info("The tracker has no projects yet.")
-    if EDITOR and st.button("Load the UNDP A2F plan (DIP 7 Oct 2026)", type="primary"):
+    if EDITOR and st.button("Load the starter projects (UNDP A2F and FAO EFSP BDS)", type="primary"):
         store.load_seed()
         read_tab.clear()
         st.rerun()
@@ -392,7 +392,8 @@ def page_plan():
             m = g[~g.rec]
             a = m.progress.mean() if not m.empty else None
             st_ = "Ongoing" if a is None else "Completed" if a >= 99.5 else "Overdue" if (g.flag == "Overdue").any() else "In progress" if a > 0 else "Not started"
-            rows.append(dict(label=f"{no:02d} " + (action_title(no) if len(action_title(no)) <= 56 else action_title(no)[:55] + "…"), start=g.start_d.min(), end=g.end_d.max() + timedelta(days=1),
+            span = m if not m.empty else g  # recurring items don't stretch an action's bar
+            rows.append(dict(label=f"{no:02d} " + (action_title(no) if len(action_title(no)) <= 56 else action_title(no)[:55] + "…"), start=span.start_d.min(), end=span.end_d.max() + timedelta(days=1),
                              status=st_, info=f"{'Ongoing' if a is None else f'{a:.0f}%'} · {len(g)} sub-actions"))
     else:
         rows = [dict(label=f"{r.ref} " + (r.sub if len(r.sub) <= 56 else r.sub[:55] + "…"), start=r.start_d, end=r.end_d + timedelta(days=1),
@@ -409,7 +410,7 @@ def page_plan():
                     hovertemplate="%{y}<br>%{customdata[1]} – %{customdata[2]}<br>%{customdata[0]}<extra></extra>")
     fig.add_vline(x=datetime.combine(TODAY, datetime.min.time()).timestamp() * 1000, line=dict(color="#BE3A2E", width=2),
                   annotation_text="Today", annotation_font_color="#BE3A2E")
-    step = 2 if (weeks or 20) > 12 else 1
+    step = max(1, -(-(weeks or 20) // 12))
     ticks = [w_start + timedelta(days=7 * k) for k in range(0, (weeks or 20) + 1, step)]
     fig.update_layout(barmode="overlay", height=max(380, 26 * len(df) + 80), margin=dict(l=10, r=10, t=30, b=10),
                       yaxis=dict(autorange="reversed", tickfont=dict(size=11), categoryorder="array", categoryarray=df.label.tolist()),
@@ -686,6 +687,17 @@ def page_projects():
         hide_index=True, width="stretch")
     if not EDITOR:
         return
+    missing = seed_projects()
+    missing = missing[~missing["id"].isin(projects["id"])]
+    if not missing.empty:
+        st.info("Starter projects included with this version of the app that are not in your tracker yet:")
+        for r in missing.itertuples():
+            c1, c2 = st.columns([4, 1])
+            c1.markdown(f"**{r.short or r.name}** · {r.client}  \n{r.plan_baseline} · {r.start} to {r.end}")
+            if c2.button("Add to tracker", key=f"seed_{r.id}", type="primary"):
+                add_seed_project(r.id)
+                st.session_state["_next_pid"] = r.id
+                st.rerun()
     with st.expander("Edit the selected project's details"):
         project_form(P.to_dict() | {"id": pid}, "edit")
     with st.expander("Add a new project", expanded=False):

@@ -11,10 +11,14 @@ Views: Overview · Implementation plan (Gantt + Excel download) · Update progre
 pip install -r requirements.txt
 streamlit run app.py
 ```
-The app requires Google Sheets credentials by default. For an offline PowerShell test,
-set `$env:ACE_TRACKER_LOCAL = "1"` before starting Streamlit with no Google Sheets
-credentials configured. This mode stores data in `data/*.csv`, initialized from
-`seed_data/` (UNDP A2F, DIP 7 Oct 2026). Leave this variable unset on Community Cloud.
+Google Sheets credentials are required by default. For explicit offline testing in PowerShell, set `$env:ACE_TRACKER_LOCAL = "1"` with no Google credentials configured.
+
+Starter projects included in `seed_data/`:
+
+| Project | Plan baseline | Sub-actions |
+|---|---|---|
+| UNDP A2F — ToT on Value Chain Quality Improvement and Export Readiness (UNDP-AFG-00809) | DIP 7 Oct 2026 | 80 |
+| FAO EFSP-AF2 Matching Grants — Business Development Services (Contract 018/2026) | DIP update 28 Sep 2026 | 71 |
 
 ## 2. Create the Google Sheet and a service account (once, ~10 minutes)
 
@@ -27,14 +31,15 @@ credentials configured. This mode stores data in `data/*.csv`, initialized from
 7. Copy the sheet ID from its link: `docs.google.com/spreadsheets/d/<SHEET ID>/edit`.
 
 The app creates the tabs it needs (`projects, actions, tasks, indicators, log, snaps`) on first run.
+
 ## 3. Publish on Streamlit Community Cloud
 
 1. Put this folder in a GitHub repository (private is fine). Do **not** upload a real `secrets.toml`.
 2. Go to <https://share.streamlit.io> → **Create app** → choose the repo, branch, and `app.py`.
-3. **Advanced settings → Secrets**: paste the contents of `.streamlit/secrets.toml` with your real values
+3. **Advanced settings → Secrets**: paste the contents of `.streamlit/secrets.toml.example` with your real values
    (two passwords, the sheet ID, and every field from the service-account JSON).
 4. Deploy. Open the app, sign in with the **editor** password, and click
-   **Load the UNDP A2F plan** (only shown while the sheet is empty).
+   **Load the starter projects** (only shown while the sheet is empty).
 5. Share the app link. Executives use the viewer password; project officers use the editor password and type their name,
    which is recorded in the change log.
 
@@ -45,6 +50,14 @@ The app creates the tabs it needs (`projects, actions, tasks, indicators, log, s
 - **Overdue** = planned end date passed and not Completed. **Late start** = start date passed 3+ days ago and still Not started.
 - Recurring items (bi-weekly meetings, weekly tracker, safeguarding) show as Ongoing and are excluded from %.
 - Each save records a daily snapshot, which draws the actual line on the progress curve.
+
+## Updating an app that is already live
+
+1. Replace the files in your GitHub repository with this version (keep your Secrets as they are).
+   Streamlit Cloud redeploys automatically within a minute or two.
+2. Sign in with the editor password and open **Projects**. Any starter project that is not in your
+   Google Sheet yet is listed at the top with an **Add to tracker** button. Click it once.
+   Existing projects and officers' updates are not touched.
 
 ## Adding another project
 
